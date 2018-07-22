@@ -1,0 +1,44 @@
+---
+- name: Instalação Kubernetes CentOS
+  hosts: k8s
+  remote_user: root
+  become: yes
+  become_method: sudo
+
+  tasks:
+    - name: Desabilita selinux
+      shell: setenforce 0
+   
+    - name: Desabilita em definitivo no reboot
+      selinux:
+        state: disabled
+   
+    - name: Desabilita firewall
+      shell: systemctl stop firewalld && systemctl disable firewalld
+    
+    - name: Adiciona o repositorio do k8s
+      yum_repository:
+        name: kubernetes
+        description: KUBERNETES YUM repo
+        file: kubernetes
+        baseurl: https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
+        gpgcheck: yes
+        gpgkey: https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+        enabled: yes  
+
+    - name: Instalar Docker
+      shell: curl -fsSL https://get.docker.com | bash
+
+    - name: Instalar Kubernetes 
+      yum: pkg={{item}} state=installed
+      with_items:
+       - kubelet
+       - kubeadm
+       - kubectl
+
+    - name: Iniciar o Kubernetes
+      shell: systemctl enable kubelet && systemctl start kubelet
+
+    - name: Ajusta parametros do Kernel
+      shell: echo net.bridge.bridge-nf-call-ip6tables = 1 >> /etc/sysctl.d/k8s.conf && echo net.bridge.bridge-nf-call-iptables = 1 >> etc/sysctl.d/k8s.conf && sysctl --system 
+
