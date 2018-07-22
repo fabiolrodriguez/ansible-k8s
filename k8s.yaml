@@ -30,6 +30,9 @@
 
     - name: Instalar Docker
       shell: curl -fsSL https://get.docker.com | bash
+    
+    - name: Iniciar Docker
+      shell: systemctl enable docker && systemctl start docker
 
     - name: Instalar Kubernetes 
       yum: pkg={{item}} state=installed
